@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-// date and time formatting package
-import 'package:intl/intl.dart';
-
-import './transaction.dart';
+import './widgets/Transaction_list.dart';
+import './widgets/new_transaction.dart';
+import './models/transaction.dart';
+import './widgets/chart.dart';
 
 void main() => runApp(MyApp());
 
@@ -11,129 +11,126 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter App',
+      debugShowCheckedModeBanner: false,
+      title: 'Personnal Expenses',
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+        accentColor: Colors.amber,
+        fontFamily: 'QuickSand',
+        textTheme: ThemeData.light().textTheme.copyWith(
+            title: TextStyle(
+                fontFamily: 'OpenSans',
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
+
+        //set the Appbar them. we assign a new text them for our appbar and base it on the default text them and overwrite it with custom value
+        appBarTheme: AppBarTheme(
+          textTheme: ThemeData.light().textTheme.copyWith(
+                title: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'OpenSans',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+              ),
+        ),
+      ),
       home: MyHomePage(),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-//We create a List widget of transaction widgets called transactions
-  final List<Transaction> transactions = [
-    Transaction(
-        id: 't1', title: 'New shoes', amount: 69.99, date: DateTime.now()),
-    Transaction(
-        id: 't2', title: 'New T-shirt', amount: 35.99, date: DateTime.now()),
-    Transaction(
-        id: 't3', title: 'New Computer', amount: 1669.99, date: DateTime.now()),
-    Transaction(
-        id: 't4', title: 'Food shopping', amount: 125.30, date: DateTime.now()),
+class MyHomePage extends StatefulWidget {
+  // text edidting controller can be assigned to textField
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final List<Transaction> _userTransactions = [
+    // Transaction(
+    //     id: 't1', title: 'New shoes', amount: 69.99, date: DateTime.now()),
+    // Transaction(
+    //     id: 't2', title: 'New T-shirt', amount: 35.99, date: DateTime.now()),
+    // Transaction(
+    //     id: 't3', title: 'New Computer', amount: 1669.99, date: DateTime.now()),
+    // Transaction(
+    //     id: 't4', title: 'Food shopping', amount: 125.30, date: DateTime.now()),
   ];
 
-  String titleInput;
-  String amountInput;
+  List<Transaction> get _recentTransactions {
+    //the Where() method can be accessed from every List widgets.
+    // it allows us to run a function on every item in the list. if the function return true, the functions is kept in a newly returned list
+    return _userTransactions.where((tx) {
+      return tx.date.isAfter(DateTime.now().subtract(
+        Duration(days: 7),
+        ));
+    }).toList();
+  }
+
+// function that will create and add a new transaction to the transactionlist
+  void _addNewTransaction(String txTitle, double txAmount) {
+    //we instanciate a new transaction giving it all the required property values
+    final newTx = Transaction(
+      id: DateTime.now().toString(),
+      title: txTitle,
+      amount: txAmount,
+      date: DateTime.now(),
+    );
+
+// we set the state with the new transaction by adding it to the list of transaction using the method add() and passing the new transaction instance as argument
+    setState(() {
+      _userTransactions.add(newTx);
+    });
+  }
+
+  void _startAddNewTransaction(BuildContext ctx) {
+    // CTX is passed so the builder can use it to create the sheet
+    // uses the context object to show the modal sheet.
+    //builder is a functinoo that returns the widget that should be inside the modal sheet
+    showModalBottomSheet(
+      context: ctx,
+      builder: (_) {
+        // to catch
+        return GestureDetector(
+          onTap: () {},
+          child: NewTransaction(_addNewTransaction),
+          behavior: HitTestBehavior.opaque,
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Flutter App'),
-      ),
-      body: Column(
-        // mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Container(
-            width: double.infinity,
-            child: Card(
-              elevation: 5,
-              color: Colors.blue,
-              child: Text("chart"),
-            ),
-          ),
-
-        //INPUT AREA -------------------------------------------------------------------------------
-
-          Card(
-            elevation: 5,
-            child: Container(
-              padding: EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  // Textfield Widget is responsible for receiving data user input
-                  //the onchanged listener will fire with every keystroke
-                  //onSumbmit will fire on the submit
-                  TextField(
-                      decoration: InputDecoration(labelText: 'Title'),
-                      onChanged: (val) {
-                        titleInput = val;
-                      }),
-                  TextField(
-                      decoration: InputDecoration(labelText: 'Amount'),
-                      onChanged: (val) {
-                        amountInput = val;
-                      }),
-                  FlatButton(
-                    child: Text('add Transaction'),
-                    onPressed: () {
-                      print(amountInput);
-                      print(titleInput);
-                    }, 
-                    textColor: Colors.purple,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-//we want to map trought our transactions List to create a card widget for each transaction
-// the functin in map() gets executed on every item in the array
-          Column(
-            children: transactions.map((tx) {
-              return Card(
-                  child: Row(
-                children: <Widget>[
-                  Container(
-                    margin:
-                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                    child: Text(
-                      //String interpolation syntax below
-                      '\£${tx.amount}',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.purple),
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.purple,
-                        width: 2,
-                      ),
-                    ),
-                    padding: EdgeInsets.all(10),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        tx.title,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        // see documentation for formatting date on pub.dev (Intl package)
-                        // DateFormat('yyyy/MM/dd').format(tx.date),
-                        DateFormat.yMMMd().format(tx.date),
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
-                      )
-                    ],
-                  )
-                ],
-              ));
-            }).toList(),
-          ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () => _startAddNewTransaction(context),
+          )
         ],
+        centerTitle: true,
+        title: Text(
+          'Personnal Expenses',
+        ),
+      ),
+
+      // we wrap Column in a scroll view
+      body: SingleChildScrollView(
+        child: Column(
+          // mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Chart(_recentTransactions),
+            TransactionList(_userTransactions),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () => _startAddNewTransaction(context),
       ),
     );
   }
